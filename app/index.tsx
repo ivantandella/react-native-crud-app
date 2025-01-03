@@ -16,9 +16,11 @@ import { ThemeContext } from "@/context/ThemeContext";
 import { Octicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import Animated, { LinearTransition } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
 
 export default function Index() {
-  const [todo, setTodo] = React.useState<typeof data>(data);
+  const [todo, setTodo] = React.useState<typeof data>([]);
   const [input, onChangeInput] = React.useState("");
 
   const { colorScheme, setColorScheme, theme } = React.useContext(ThemeContext);
@@ -27,6 +29,37 @@ export default function Index() {
   const [loaded, error] = useFonts({
     Inter_500Medium,
   });
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem("todos");
+        const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+        if (storageTodos && storageTodos.length) {
+          setTodo(storageTodos);
+        } else {
+          setTodo(data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, [data]);
+
+  React.useEffect(() => {
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem("todos", JSON.stringify(todo));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    saveData();
+  }, [todo]);
 
   if (!loaded && !error) {
     return null;
@@ -120,6 +153,8 @@ export default function Index() {
         itemLayoutAnimation={LinearTransition}
         keyboardDismissMode={"on-drag"}
       />
+
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </SafeAreaView>
   );
 }
