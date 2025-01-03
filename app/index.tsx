@@ -15,10 +15,9 @@ import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
 import { ThemeContext } from "@/context/ThemeContext";
 import { Octicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
+import Animated, { LinearTransition } from "react-native-reanimated";
 
 export default function Index() {
-  // const colorScheme = Appearance.getColorScheme();
-
   const [todo, setTodo] = React.useState<typeof data>(data);
   const [input, onChangeInput] = React.useState("");
 
@@ -67,9 +66,11 @@ export default function Index() {
           onChangeText={onChangeInput}
           value={input}
         />
+
         <Pressable style={[styles.border, styles.button]} onPress={onAddTodo}>
           <Text style={{ color: theme.background }}>Add</Text>
         </Pressable>
+
         <Pressable
           onPress={() =>
             setColorScheme(colorScheme === "dark" ? "light" : "dark")
@@ -84,7 +85,7 @@ export default function Index() {
         </Pressable>
       </View>
 
-      <FlatList
+      <Animated.FlatList
         data={todo}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
@@ -107,6 +108,7 @@ export default function Index() {
                 {item.title}
               </Text>
             </Pressable>
+
             <Pressable
               style={styles.delete}
               onPress={() => onDeleteTodo(item.id)}
@@ -115,6 +117,8 @@ export default function Index() {
             </Pressable>
           </View>
         )}
+        itemLayoutAnimation={LinearTransition}
+        keyboardDismissMode={"on-drag"}
       />
     </SafeAreaView>
   );
