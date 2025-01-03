@@ -1,6 +1,5 @@
 import {
   Appearance,
-  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
@@ -13,13 +12,18 @@ import { data } from "../data/todos";
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
+import { ThemeContext } from "@/context/ThemeContext";
+import { Octicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
 
 export default function Index() {
-  const colorScheme = Appearance.getColorScheme();
-  const styles = createStyles(colorScheme);
+  // const colorScheme = Appearance.getColorScheme();
 
   const [todo, setTodo] = React.useState<typeof data>(data);
   const [input, onChangeInput] = React.useState("");
+
+  const { colorScheme, setColorScheme, theme } = React.useContext(ThemeContext);
+  const styles = createStyles(theme);
 
   const [loaded, error] = useFonts({
     Inter_500Medium,
@@ -64,9 +68,19 @@ export default function Index() {
           value={input}
         />
         <Pressable style={[styles.border, styles.button]} onPress={onAddTodo}>
-          <Text style={{ color: colorScheme === "dark" ? "black" : "white" }}>
-            Add
-          </Text>
+          <Text style={{ color: theme.background }}>Add</Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            setColorScheme(colorScheme === "dark" ? "light" : "dark")
+          }
+          style={{ marginLeft: 8 }}
+        >
+          {colorScheme === "dark" ? (
+            <Octicons name="sun" size={24} color="white" />
+          ) : (
+            <Octicons name="moon" size={24} color="black" />
+          )}
         </Pressable>
       </View>
 
@@ -97,11 +111,7 @@ export default function Index() {
               style={styles.delete}
               onPress={() => onDeleteTodo(item.id)}
             >
-              <FontAwesome
-                name="trash"
-                size={24}
-                color={colorScheme === "dark" ? "black" : "white"}
-              />
+              <FontAwesome name="trash" size={20} color={theme.icon} />
             </Pressable>
           </View>
         )}
@@ -110,17 +120,14 @@ export default function Index() {
   );
 }
 
-const createStyles = (
-  colorScheme: ReturnType<typeof Appearance.getColorScheme>
-) => {
-  const COLOR = colorScheme === "dark" ? "white" : "black";
+const createStyles = (theme: typeof Colors.light) => {
   const MAX_WIDTH = 1024;
 
   return StyleSheet.create({
     container: {
       flex: 1,
       padding: 20,
-      backgroundColor: colorScheme === "dark" ? "black" : "white",
+      backgroundColor: theme.background,
       width: "100%",
     },
     form: {
@@ -132,14 +139,14 @@ const createStyles = (
       marginBottom: 10,
     },
     border: {
-      borderColor: COLOR,
+      borderColor: theme.border,
       borderWidth: 1,
       borderRadius: 4,
     },
     input: {
       flex: 1,
       padding: 4,
-      color: COLOR,
+      color: theme.text,
       fontSize: 18,
       fontFamily: "Inter_500Medium",
     },
@@ -148,7 +155,7 @@ const createStyles = (
       padding: 4,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: COLOR,
+      backgroundColor: theme.button,
       marginLeft: 8,
     },
     delete: {
@@ -177,7 +184,7 @@ const createStyles = (
       flex: 1,
     },
     text: {
-      color: COLOR,
+      color: theme.text,
       fontSize: 18,
       fontFamily: "Inter_500Medium",
     },
@@ -187,7 +194,7 @@ const createStyles = (
     },
     separator: {
       height: 1,
-      backgroundColor: COLOR,
+      backgroundColor: "gray",
     },
   });
 };
