@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { data } from "../data/todos";
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
 
 export default function Index() {
   const colorScheme = Appearance.getColorScheme();
@@ -19,6 +20,14 @@ export default function Index() {
 
   const [todo, setTodo] = React.useState<typeof data>(data);
   const [input, onChangeInput] = React.useState("");
+
+  const [loaded, error] = useFonts({
+    Inter_500Medium,
+  });
+
+  if (!loaded && !error) {
+    return null;
+  }
 
   const onAddTodo = () => {
     setTodo([
@@ -132,6 +141,7 @@ const createStyles = (
       padding: 4,
       color: COLOR,
       fontSize: 18,
+      fontFamily: "Inter_500Medium",
     },
     button: {
       width: 50,
@@ -169,6 +179,7 @@ const createStyles = (
     text: {
       color: COLOR,
       fontSize: 18,
+      fontFamily: "Inter_500Medium",
     },
     completedText: {
       textDecorationLine: "line-through",
