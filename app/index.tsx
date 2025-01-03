@@ -1,6 +1,5 @@
 import {
   Appearance,
-  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
@@ -12,13 +11,59 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { data } from "../data/todos";
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
+import { ThemeContext } from "@/context/ThemeContext";
+import { Octicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
+import Animated, { LinearTransition } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
 
 export default function Index() {
-  const colorScheme = Appearance.getColorScheme();
-  const styles = createStyles(colorScheme);
-
-  const [todo, setTodo] = React.useState<typeof data>(data);
+  const [todo, setTodo] = React.useState<typeof data>([]);
   const [input, onChangeInput] = React.useState("");
+
+  const { colorScheme, setColorScheme, theme } = React.useContext(ThemeContext);
+  const styles = createStyles(theme);
+
+  const [loaded, error] = useFonts({
+    Inter_500Medium,
+  });
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem("todos");
+        const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+        if (storageTodos && storageTodos.length) {
+          setTodo(storageTodos);
+        } else {
+          setTodo(data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, [data]);
+
+  React.useEffect(() => {
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem("todos", JSON.stringify(todo));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    saveData();
+  }, [todo]);
+
+  if (!loaded && !error) {
+    return null;
+  }
 
   const onAddTodo = () => {
     setTodo([
@@ -54,14 +99,26 @@ export default function Index() {
           onChangeText={onChangeInput}
           value={input}
         />
+
         <Pressable style={[styles.border, styles.button]} onPress={onAddTodo}>
-          <Text style={{ color: colorScheme === "dark" ? "black" : "white" }}>
-            Add
-          </Text>
+          <Text style={{ color: theme.background }}>Add</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() =>
+            setColorScheme(colorScheme === "dark" ? "light" : "dark")
+          }
+          style={{ marginLeft: 8 }}
+        >
+          {colorScheme === "dark" ? (
+            <Octicons name="sun" size={24} color="white" />
+          ) : (
+            <Octicons name="moon" size={24} color="black" />
+          )}
         </Pressable>
       </View>
 
-      <FlatList
+      <Animated.FlatList
         data={todo}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
@@ -84,34 +141,32 @@ export default function Index() {
                 {item.title}
               </Text>
             </Pressable>
+
             <Pressable
               style={styles.delete}
               onPress={() => onDeleteTodo(item.id)}
             >
-              <FontAwesome
-                name="trash"
-                size={24}
-                color={colorScheme === "dark" ? "black" : "white"}
-              />
+              <FontAwesome name="trash" size={20} color={theme.icon} />
             </Pressable>
           </View>
         )}
+        itemLayoutAnimation={LinearTransition}
+        keyboardDismissMode={"on-drag"}
       />
+
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </SafeAreaView>
   );
 }
 
-const createStyles = (
-  colorScheme: ReturnType<typeof Appearance.getColorScheme>
-) => {
-  const COLOR = colorScheme === "dark" ? "white" : "black";
+const createStyles = (theme: typeof Colors.light) => {
   const MAX_WIDTH = 1024;
 
   return StyleSheet.create({
     container: {
       flex: 1,
       padding: 20,
-      backgroundColor: colorScheme === "dark" ? "black" : "white",
+      backgroundColor: theme.background,
       width: "100%",
     },
     form: {
@@ -123,22 +178,23 @@ const createStyles = (
       marginBottom: 10,
     },
     border: {
-      borderColor: COLOR,
+      borderColor: theme.border,
       borderWidth: 1,
       borderRadius: 4,
     },
     input: {
       flex: 1,
       padding: 4,
-      color: COLOR,
+      color: theme.text,
       fontSize: 18,
+      fontFamily: "Inter_500Medium",
     },
     button: {
       width: 50,
       padding: 4,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: COLOR,
+      backgroundColor: theme.button,
       marginLeft: 8,
     },
     delete: {
@@ -167,8 +223,9 @@ const createStyles = (
       flex: 1,
     },
     text: {
-      color: COLOR,
+      color: theme.text,
       fontSize: 18,
+      fontFamily: "Inter_500Medium",
     },
     completedText: {
       textDecorationLine: "line-through",
@@ -176,7 +233,7 @@ const createStyles = (
     },
     separator: {
       height: 1,
-      backgroundColor: COLOR,
+      backgroundColor: "gray",
     },
   });
 };
