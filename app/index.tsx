@@ -1,5 +1,4 @@
 import {
-  Appearance,
   FlatList,
   Pressable,
   StyleSheet,
@@ -8,7 +7,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { data } from "../data/todos";
+import { data, Todo } from "../data/todos";
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
@@ -17,37 +16,44 @@ import { Octicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 
 export default function Index() {
-  const [todo, setTodo] = React.useState<typeof data>([]);
+  const [todo, setTodo] = React.useState<Todo[]>([]);
   const [input, onChangeInput] = React.useState("");
 
   const { colorScheme, setColorScheme, theme } = React.useContext(ThemeContext);
   const styles = createStyles(theme);
+
+  const router = useRouter();
+  const isFocused = useIsFocused();
 
   const [loaded, error] = useFonts({
     Inter_500Medium,
   });
 
   React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem("todos");
-        const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
+    if (isFocused) {
+      const fetchData = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem("todos");
+          const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-        if (storageTodos && storageTodos.length) {
-          setTodo(storageTodos);
-        } else {
-          setTodo(data);
+          if (storageTodos && storageTodos.length) {
+            setTodo(storageTodos);
+          } else {
+            setTodo(data);
+          }
+        } catch (error) {
+          console.error(error);
         }
-      } catch (error) {
-        console.error(error);
-      }
-    };
+      };
 
-    fetchData();
-  }, [data]);
+      fetchData();
+    }
+  }, [isFocused]);
 
   React.useEffect(() => {
     const saveData = async () => {
@@ -89,6 +95,10 @@ export default function Index() {
     setTodo(todo.filter((item) => item.id !== id));
   };
 
+  const handleNavigate = (id: number) => {
+    router.push(`/todos/${id}`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.form}>
@@ -110,11 +120,11 @@ export default function Index() {
           }
           style={{ marginLeft: 8 }}
         >
-          {colorScheme === "dark" ? (
-            <Octicons name="sun" size={24} color="white" />
-          ) : (
-            <Octicons name="moon" size={24} color="black" />
-          )}
+          <Octicons
+            name={colorScheme === "dark" ? "sun" : "moon"}
+            size={24}
+            color={theme.text}
+          />
         </Pressable>
       </View>
 
@@ -132,7 +142,8 @@ export default function Index() {
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Pressable
-              onPress={() => onCompleteTodo(item.id)}
+              onPress={() => handleNavigate(item.id)}
+              onLongPress={() => onCompleteTodo(item.id)}
               style={styles.item}
             >
               <Text
@@ -153,7 +164,6 @@ export default function Index() {
         itemLayoutAnimation={LinearTransition}
         keyboardDismissMode={"on-drag"}
       />
-
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </SafeAreaView>
   );
@@ -172,6 +182,7 @@ const createStyles = (theme: typeof Colors.light) => {
     form: {
       flexDirection: "row",
       justifyContent: "space-between",
+      alignItems: "center",
       width: "100%",
       maxWidth: MAX_WIDTH,
       marginHorizontal: "auto",
@@ -200,7 +211,7 @@ const createStyles = (theme: typeof Colors.light) => {
     delete: {
       width: 32,
       height: 32,
-      backgroundColor: "red",
+      backgroundColor: "#c92a2a",
       alignItems: "center",
       justifyContent: "center",
       borderRadius: 100,

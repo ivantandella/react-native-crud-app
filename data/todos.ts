@@ -1,3 +1,9 @@
+export interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
 export const data = [
   {
     id: 1,

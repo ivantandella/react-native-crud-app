@@ -2,8 +2,8 @@ export const Colors = {
   light: {
     text: "black",
     border: "black",
-    background: "white",
-    icon: "white",
+    background: "#eee",
+    icon: "#eee",
     button: "black",
   },
   dark: {
